@@ -1,0 +1,29 @@
+{
+  "name": "exposito",
+  "version": "0.0.1",
+  "description": "Main Exposito repository",
+  "main": "index.js",
+  "scripts": {
+    "setup": "node script/setup.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/exposito-io/exposito.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/exposito-io/exposito/issues"
+  },
+  "homepage": "https://github.com/exposito-io/exposito#readme",
+  "repositories": {
+    "api-server": "https://github.com/exposito-io/api-server.git",
+    "dashboard": "https://github.com/Exposito-io/dashboard.git",
+    "models": "https://github.com/Exposito-io/models.git"
+  },
+  "dependencies": {
+    "child-process-promise": "^2.2.1",
+    "npm": "^5.8.0"
+  }
+}
