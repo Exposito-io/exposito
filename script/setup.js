@@ -4,6 +4,8 @@ const package = require('../package.json')
 const { exec } = require('child-process-promise')
 const npm = require('npm')
 const os = require('os')
+const fs = require('fs-extra')
+const chownr = require('chownr')
 
 async function main() {
 
@@ -14,13 +16,12 @@ async function main() {
 
     
     console.log('Cleaning repository folders')
-    // TODO
+    await deleteRepos()
 
     console.log('Cloning repositories')
     await cloneRepos()
     
     console.log('Installing dependencies')
-
     await npmInstalls()
     //console.log('SUDO_USER: ', process.env.SUDO_USER)
 
@@ -50,13 +51,22 @@ async function cloneRepos() {
     return Promise.all(cloneCommands)      
 }
 
+async function deleteRepos() {
+    const commands = getRepos()
+                    .map(async repo => {
+                        if (await fs.exists(repo.name))
+                            await fs.remove(repo.name)
+                    })
+    return Promise.all(commands)
+}
+
 //npm.commands.link()
 
 async function npmInstalls() {
-    let commands = getRepos()
+    const commands = getRepos()
                         .map(repo => npmInstall(repo.name))
     
-    return Promise.name(commands)
+    return Promise.all(commands)
 }
 
 /**
@@ -65,13 +75,15 @@ async function npmInstalls() {
  */
 async function npmInstall(repoName) {
     return new Promise((res,rej) => {
-        npm.load({}, err => {
+        npm.load({ user: getUser() }, err => {
             if (err)
                 rej(err)
             
             npm.commands.install(`./${repoName}`, [], (e,r) => {
                 console.log('error: ', e)
                 console.log('result: ', r)
+                
+                chownr.sync(`./${repoName}`, parseInt(getUid()), parseInt(getGid()))
                 res()
             })
         })
@@ -85,6 +97,18 @@ async function npmInstall(repoName) {
 function getRepos() {
     return Object.entries(package.repositories)
     .map(repo => ({ name: repo[0], url: repo[1] }))
+}
+
+function getUser() {
+    return process.env.SUDO_USER
+}
+
+function getUid() {
+    return process.env.SUDO_UID
+}
+
+function getGid() {
+    return process.env.SUDO_GID
 }
 
 
