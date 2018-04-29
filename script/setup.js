@@ -3,8 +3,16 @@
 const package = require('../package.json')
 const { exec } = require('child-process-promise')
 const npm = require('npm')
+const os = require('os')
 
 async function main() {
+
+    if (!hasPriviledges()) {
+        console.log('Please run the command as root/admin')
+        return
+    }
+
+    
     console.log('Cleaning repository folders')
     // TODO
 
@@ -14,9 +22,27 @@ async function main() {
     console.log('Installing dependencies')
 
     await npmInstalls()
+    //console.log('SUDO_USER: ', process.env.SUDO_USER)
 
 }
 
+
+function hasPriviledges() {
+    if (os.platform() === 'linux' && isRoot())
+        return true
+
+    if (os.platform() === 'darwin' && isRoot())
+        return true
+
+    if (os.platform() === 'win32')
+        return true
+
+    return false
+}
+
+function isRoot() {
+    return process.getuid && process.getuid() === 0
+}
 
 async function cloneRepos() {
     let cloneCommands = getRepos()
@@ -24,6 +50,7 @@ async function cloneRepos() {
     return Promise.all(cloneCommands)      
 }
 
+//npm.commands.link()
 
 async function npmInstalls() {
     let commands = getRepos()
