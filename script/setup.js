@@ -6,6 +6,7 @@ const npm = require('npm')
 const os = require('os')
 const fs = require('fs-extra')
 const chownr = require('chownr')
+const execa = require('execa')
 
 async function main() {
 
@@ -68,6 +69,15 @@ async function npmInstalls() {
     
     return Promise.all(commands)
 }
+
+async function npmInstallLinks() {
+    const commands = getRepos()
+                        .map(repo => execa('npm link', [], { cwd: repo.name }))
+    
+    return Promise.all(commands)
+}
+
+
 
 /**
  * Execute a npm install for a repository
