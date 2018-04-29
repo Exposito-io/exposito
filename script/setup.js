@@ -10,20 +10,27 @@ const execa = require('execa')
 
 async function main() {
 
-    if (!hasPriviledges()) {
-        console.log('Please run the command as root/admin')
-        return
+    try {
+        if (!hasPriviledges()) {
+            console.log('Please run the command as root/admin')
+            return
+        }
+
+        
+        console.log('Cleaning repository folders')
+        await deleteRepos()
+
+        console.log('Cloning repositories')
+        await cloneRepos()
+        
+        console.log('Installing dependencies')
+        await npmInstalls()
+
+        console.log('Linking repositories')
+        await npmInstallLinks()
+    } catch(e) {
+        console.log('Error: ', e)
     }
-
-    
-    console.log('Cleaning repository folders')
-    await deleteRepos()
-
-    console.log('Cloning repositories')
-    await cloneRepos()
-    
-    console.log('Installing dependencies')
-    await npmInstalls()
     //console.log('SUDO_USER: ', process.env.SUDO_USER)
 
 }
@@ -72,7 +79,7 @@ async function npmInstalls() {
 
 async function npmInstallLinks() {
     const commands = getRepos()
-                        .map(repo => execa('npm link', [], { cwd: repo.name }))
+                        .map(repo => execa('npm', ['link'], { cwd: `./${repo.name}` }))
     
     return Promise.all(commands)
 }
