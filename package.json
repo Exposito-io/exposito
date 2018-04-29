@@ -18,9 +18,18 @@
   },
   "homepage": "https://github.com/exposito-io/exposito#readme",
   "repositories": {
-    "api-server": "https://github.com/exposito-io/api-server.git",
-    "dashboard": "https://github.com/Exposito-io/dashboard.git",
-    "models": "https://github.com/Exposito-io/models.git"
+    "api-server": { 
+      "url": "https://github.com/exposito-io/api-server.git",
+      "links": []
+    },
+    "dashboard": {
+      "url": "https://github.com/Exposito-io/dashboard.git",
+      "links": []
+    },
+    "models": {
+      "url": "https://github.com/Exposito-io/models.git",
+      "links": []
+    }
   },
   "dependencies": {
     "child-process-promise": "^2.2.1",

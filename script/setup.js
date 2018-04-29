@@ -1,12 +1,11 @@
 #!/usr/bin/node
 
 const package = require('../package.json')
-const { exec } = require('child-process-promise')
 const npm = require('npm')
 const os = require('os')
 const fs = require('fs-extra')
-const chownr = require('chownr')
 const execa = require('execa')
+const { performance } = require('perf_hooks')
 
 async function main() {
 
@@ -15,7 +14,6 @@ async function main() {
             console.log('Please run the command as root/admin')
             return
         }
-
         
         console.log('Cleaning repository folders')
         await deleteRepos()
@@ -28,6 +26,8 @@ async function main() {
 
         console.log('Linking repositories')
         await npmInstallLinks()
+
+        console.log('Done :)')
     } catch(e) {
         console.log('Error: ', e)
     }
@@ -37,13 +37,13 @@ async function main() {
 
 
 function hasPriviledges() {
-    if (os.platform() === 'linux' && isRoot())
+    if (isLinux() && isRoot())
         return true
 
-    if (os.platform() === 'darwin' && isRoot())
+    if (isMac() && isRoot())
         return true
 
-    if (os.platform() === 'win32')
+    if (isWindows() && 'win32')
         return true
 
     return false
@@ -55,7 +55,7 @@ function isRoot() {
 
 async function cloneRepos() {
     let cloneCommands = getRepos()
-                         .map(repo => exec(`git clone ${repo.url} ${repo.name}`)) 
+                         .map(repo => execAsUser('git', ['clone', repo.url, repo.name])) 
     return Promise.all(cloneCommands)      
 }
 
@@ -68,13 +68,14 @@ async function deleteRepos() {
     return Promise.all(commands)
 }
 
-//npm.commands.link()
 
 async function npmInstalls() {
+
     const commands = getRepos()
-                        .map(repo => npmInstall(repo.name))
-    
-    return Promise.all(commands)
+        .map(repo => execAsUser('npm', ['install'], { cwd: `./${repo.name}` }))
+
+    return Promise.all(commands)    
+
 }
 
 async function npmInstallLinks() {
@@ -84,27 +85,29 @@ async function npmInstallLinks() {
     return Promise.all(commands)
 }
 
+async function execAsUser(command, args, opts) {
+    if (isWindows())
+        return execa(command, args, opts)
+    else {
+        args.unshift('-u', getUser(), command)
+        return execa('sudo', args, opts)
+    }
+}
 
 
-/**
- * Execute a npm install for a repository
- * @param {string} repoName
- */
-async function npmInstall(repoName) {
-    return new Promise((res,rej) => {
-        npm.load({ user: getUser() }, err => {
-            if (err)
-                rej(err)
-            
-            npm.commands.install(`./${repoName}`, [], (e,r) => {
-                console.log('error: ', e)
-                console.log('result: ', r)
-                
-                chownr.sync(`./${repoName}`, parseInt(getUid()), parseInt(getGid()))
-                res()
-            })
-        })
-    })
+
+
+
+function isLinux() {
+    return os.platform() === 'linux'
+}
+
+function isWindows() {
+    return os.platform() === 'win32'
+}
+
+function isMac() {    
+    return os.platform() === 'darwin' 
 }
 
 
@@ -113,7 +116,7 @@ async function npmInstall(repoName) {
  */
 function getRepos() {
     return Object.entries(package.repositories)
-    .map(repo => ({ name: repo[0], url: repo[1] }))
+    .map(repo => ({ name: repo[0], ...repo[1] }))
 }
 
 function getUser() {
@@ -128,6 +131,8 @@ function getGid() {
     return process.env.SUDO_GID
 }
 
-
+async function wait(time) {
+    return new Promise(res => setTimeout(res, time))
+}
 
 main()
