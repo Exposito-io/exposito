@@ -39,7 +39,10 @@ async function main() {
 
 }
 
-
+/**
+ * Verifies that the script is run with
+ * the right privileges. Must be run as root on mac and linux
+ */
 function hasPriviledges() {
     if (isLinux() && isRoot())
         return true
@@ -53,12 +56,18 @@ function hasPriviledges() {
     return false
 }
 
+/**
+ * Clone the repositories in the main folder
+ */
 async function cloneRepos() {
     let cloneCommands = getRepos()
                          .map(repo => execAsUser('git', ['clone', repo.url, repo.name])) 
     return Promise.all(cloneCommands)      
 }
 
+/**
+ * Delete the repositories
+ */
 async function deleteRepos() {
     const commands = getRepos()
                     .map(async repo => {
@@ -68,7 +77,9 @@ async function deleteRepos() {
     return Promise.all(commands)
 }
 
-
+/**
+ * Run `npm install` in each repository
+ */
 async function npmInstalls() {
 
     const commands = getRepos()
@@ -102,6 +113,13 @@ async function npmInstallLinks() {
     return Promise.all(commands)
 }
 
+/**
+ * Execute a command as a normal user (not root)
+ * 
+ * @param {string} command 
+ * @param {string[]} args 
+ * @param {any} opts 
+ */
 async function execAsUser(command, args, opts) {
     if (isWindows())
         return execa(command, args, opts)
