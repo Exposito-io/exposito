@@ -6,6 +6,7 @@ const os = require('os')
 const fs = require('fs-extra')
 const execa = require('execa')
 const { performance } = require('perf_hooks')
+const _ = require('lodash')
 
 async function main() {
 
@@ -14,6 +15,7 @@ async function main() {
             console.log('Please run the command as root/admin')
             return
         }
+        
         
         console.log('Cleaning repository folders')
         await deleteRepos()
@@ -26,6 +28,8 @@ async function main() {
 
         console.log('Linking repositories')
         await npmInstallLinks()
+        await linkRepos()
+
 
         console.log('Done :)')
     } catch(e) {
@@ -47,10 +51,6 @@ function hasPriviledges() {
         return true
 
     return false
-}
-
-function isRoot() {
-    return process.getuid && process.getuid() === 0
 }
 
 async function cloneRepos() {
@@ -78,6 +78,23 @@ async function npmInstalls() {
 
 }
 
+
+/**
+ * Replace exposito npm modules with symlinks to the
+ * local repositories
+ */
+async function linkRepos() {
+    const commands = getRepos()
+        .map(repo => repo.links.map(link => execAsUser('npm', ['link', link], { cwd: `./${repo.name}`})))
+        
+    
+    return Promise.all(commands)
+}
+
+/**
+ * Creates a symlink in the global folder
+ * for each repo
+ */
 async function npmInstallLinks() {
     const commands = getRepos()
                         .map(repo => execa('npm', ['link'], { cwd: `./${repo.name}` }))
@@ -96,7 +113,9 @@ async function execAsUser(command, args, opts) {
 
 
 
-
+function isRoot() {
+    return process.getuid && process.getuid() === 0
+}
 
 function isLinux() {
     return os.platform() === 'linux'
@@ -112,7 +131,7 @@ function isMac() {
 
 
 /**
- * @returns { {name:string, url:string}[] }
+ * @returns { {name:string, url:string, links:[]}[] }
  */
 function getRepos() {
     return Object.entries(package.repositories)

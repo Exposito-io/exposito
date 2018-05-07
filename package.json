@@ -18,13 +18,17 @@
   },
   "homepage": "https://github.com/exposito-io/exposito#readme",
   "repositories": {
-    "api-server": { 
+    "api-server": {
       "url": "https://github.com/exposito-io/api-server.git",
-      "links": []
+      "links": [
+        "models"
+      ]
     },
     "dashboard": {
       "url": "https://github.com/Exposito-io/dashboard.git",
-      "links": []
+      "links": [
+        "models"
+      ]
     },
     "models": {
       "url": "https://github.com/Exposito-io/models.git",
@@ -36,6 +40,7 @@
     "chownr": "^1.0.1",
     "execa": "^0.10.0",
     "fs-extra": "^5.0.0",
+    "lodash": "^4.17.10",
     "npm": "^5.8.0"
   }
 }
